@@ -131,6 +131,8 @@ if reference_file and test_file:
 
         output = test.copy()
         defect_count = 0
+        crack_count = 0
+        component_count = 0
 
         for contour in contours:
             area = cv2.contourArea(contour)
@@ -144,8 +146,10 @@ if reference_file and test_file:
 
                 if aspect_ratio >= 4:
                     error_type = "Possible crack"
+                    crack_count += 1
                 else:
                     error_type = "Possible component difference"
+                    component_count += 1
 
                 # Draw the detection box
                 cv2.rectangle(
@@ -192,6 +196,10 @@ if reference_file and test_file:
         )
 
         st.metric("Potential Defect Regions", defect_count)
+
+        summary1, summary2 = st.columns(2)
+        summary1.metric("Possible Crack-like Regions", crack_count)
+        summary2.metric("Possible Component Differences", component_count)
 
         if defect_count > 0:
             st.warning(
