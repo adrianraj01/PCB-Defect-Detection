@@ -9,7 +9,10 @@ st.set_page_config(
 )
 
 st.title("🔍 PCB Defect Detection System")
-st.write("Upload a reference PCB image and a test PCB image to detect potential defects.")
+st.write(
+    "Upload a reference PCB image and a test PCB image "
+    "to detect and label potential defects."
+)
 
 col1, col2 = st.columns(2)
 
@@ -136,10 +139,30 @@ if reference_file and test_file:
             if area > 150:
                 x, y, w, h = cv2.boundingRect(contour)
 
+                # Estimate a label from the shape of the difference
+                aspect_ratio = max(w, h) / max(1, min(w, h))
+
+                if aspect_ratio >= 4:
+                    error_type = "Possible crack"
+                else:
+                    error_type = "Possible component difference"
+
+                # Draw the detection box
                 cv2.rectangle(
                     output,
                     (x, y),
                     (x + w, y + h),
+                    (0, 0, 255),
+                    2
+                )
+
+                # Add the estimated error label
+                cv2.putText(
+                    output,
+                    error_type,
+                    (x, max(20, y - 8)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
                     (0, 0, 255),
                     2
                 )
@@ -165,15 +188,15 @@ if reference_file and test_file:
         c3.image(
             output,
             channels="BGR",
-            caption="Detected Differences"
+            caption="Detected Differences with Labels"
         )
 
         st.metric("Potential Defect Regions", defect_count)
 
         if defect_count > 0:
             st.warning(
-                "Potential differences detected. "
-                "Review the highlighted regions; they may include false positives."
+                "Potential differences detected. Review the highlighted "
+                "regions; labels are estimates and may include false positives."
             )
         else:
             st.success("No significant differences detected.")
